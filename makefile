@@ -51,8 +51,16 @@ all: $(A3EXE)
 $(A3EXE): $(A3OBJS) $(AALIB)
 	$(CC) $(CFLAGS) -o $(A3EXE) $(A3OBJS) $(AALIB)
 
+
+## The ar(1) tool is used to create static libraries.  On Linux
+## this is still the tool to use, however other platforms are
+## moving to the newer libtool(1).  That tool would use a command
+## line like the following
+##
+#	libtool -static -o $(AALIB) $(AALIBOBJS)
 $(AALIB): $(AALIBOBJS)
-	libtool -static -o $(AALIB) $(AALIBOBJS)
+	ar rcs $(AALIB) $(AALIBOBJS)
+	
 
 ## convenience target to remove the results of a build
 clean :

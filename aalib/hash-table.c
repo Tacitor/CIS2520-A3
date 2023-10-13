@@ -247,5 +247,9 @@ void aaPrintSummary(FILE *fp, AssociativeArray *aarray)
 			aarray->nEntries, aarray->size);
 	fprintf(fp, "Strategies used: '%s' hash, '%s' secondary hash and '%s' probing\n",
 			aarray->hashNamePrimary, aarray->hashNameSecondary, aarray->probeName);
+	fprintf(fp, "Costs accrued due to probing:\n");
+	fprintf(fp, "  Insertion : %d\n", aarray->insertCost);
+	fprintf(fp, "  Search    : %d\n", aarray->searchCost);
+	fprintf(fp, "  Deletion  : %d\n", aarray->deleteCost);
 }
 
