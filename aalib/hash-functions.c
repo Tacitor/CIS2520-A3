@@ -143,8 +143,54 @@ HashIndex linearProbe(AssociativeArray *hashTable,
 	 * For this routine, implement a "linear" probing
 	 * strategy, such as that discussed in class.
 	 */
+	HashIndex j = index;
 
-	return index;
+	//set up the stopping condition
+	int contSearch = 1;
+	int keyDataPairValidity;
+
+	//loop until a spot has been found
+	while (contSearch) {
+		keyDataPairValidity = (hashTable->table)[j].validity;
+		//count this itteration towards the total cost
+		(*cost)++;
+
+		//test to see if this index has the provided key in it
+		if ((hashTable->table)[j].key == key) {
+			contSearch = 0;
+
+			//we found it return this index
+			
+			return j;
+		}
+
+		//if this is not the key we are looking for, or we are inserting and it won't be in here
+		//test to see if need to continue searching or if we have hit a dead end that does not inlcude finding the desired key
+		if (keyDataPairValidity == HASH_EMPTY) { //the second we find an empty spot we know that the given key is not here AND that it <i>could</i> be added here is insterting
+			contSearch = 0; //stop the search
+
+			return j;
+		} else if (invalidEndsSearch && keyDataPairValidity == HASH_DELETED) {
+			//if we are insterting then we can also stop at the first tombstone and overwite it
+			contSearch = 0; //stop the search
+
+			return j;
+		}
+
+		//if we have not reached an empty spot linearly probe the next spot (use step size of 1)
+		j = (j + 1) % hashTable->size;
+
+		if (j == index) { //if we have wrapped around again to the stating position
+			//the hash table is full :(
+			
+			return -1;
+		}
+	}
+
+	//if the loop is broken out of without returning the function some error has occoured
+	fprintf(stderr, "Invalid call to linearProbe returning -1\n");
+	return -1;
+
 }
 
 

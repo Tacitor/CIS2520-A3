@@ -43,7 +43,7 @@ aaCreateAssociativeArray(
 	newTable->hashAlgorithmPrimary = lookupNamedHashStrategy(hashPrimary);
 	newTable->hashNamePrimary = strdup(hashPrimary);
 	newTable->hashAlgorithmSecondary = lookupNamedHashStrategy(hashSecondary);
-	newTable->hashNameSecondary = strdup(hashPrimary);
+	newTable->hashNameSecondary = strdup(hashSecondary);
 	newTable->hashProbe = lookupNamedProbingStrategy(probingStrategy);
 	newTable->probeName = strdup(probingStrategy);
 
@@ -155,8 +155,32 @@ int aaInsert(AssociativeArray *aarray, AAKeyType key, size_t keylen, void *value
 	 * slot with the new key and data
 	 */
 
+	//will need to use the hash algorithm from aarray, use the primary
+	//this gives us the first possible index. Might not store the value here as a collision is possible.
+	//will need to run through a probing strategy before storing the value
+	HashIndex hasedIndex = (*(aarray->hashAlgorithmPrimary))(key, keylen, aarray->size); //the index in the hash table. Indexing starts at 0
 
-	return -1;
+	//then look at the index in the location found above
+	//call the probe method to get the index
+	HashIndex finalIndex = (*(aarray->hashProbe))(aarray, key, keylen, hasedIndex, 1, &aarray->insertCost);
+
+	//check for a used index
+	if (aarray->table[finalIndex].validity == HASH_USED) {
+		//this should never be called because the prob should always work, but this is good to have just in case.
+		fprintf(stderr, "Error: Failed to probe correctly with: '%s' when inserting", aarray->probeName);
+	} else if (finalIndex >= 0) {
+
+		//add it into the array
+		aarray->table[finalIndex].key = (AAKeyType)strdup((char*)key); //Do not forget to free this later
+		aarray->table[finalIndex].keylen = keylen;
+		aarray->table[finalIndex].value = value;
+		aarray->table[finalIndex].validity = HASH_USED;
+
+		//count the newly added entry
+		aarray->nEntries++;
+	}
+
+	return finalIndex; //can always return the finalIndex b/c all the probing algos return -1 if they fail, so we can just pass it forward always
 }
 
 
