@@ -10,6 +10,9 @@
 static HashAlgorithm lookupNamedHashStrategy(const char *name);
 static HashProbe lookupNamedProbingStrategy(const char *name);
 
+/** Custom forward declaration for function created by Lukas*/
+static int deleteKey(AAKeyType, size_t, void *, void *);
+
 /**
  * Create a hash table of the given size,
  * which will use the given algorithm to create hash values,
@@ -81,6 +84,20 @@ aaDeleteAssociativeArray(AssociativeArray *aarray)
 	 * Note that memory for keys are managed, values are the
 	 * responsibility of the user
 	 */
+	//dealloc all the keys
+	aaIterateAction(aarray, deleteKey, NULL);
+
+	//dealloc the array
+	free(aarray->table);
+
+	//dealloc the strings
+	free(aarray->hashNamePrimary);
+	free(aarray->hashNameSecondary);
+	free(aarray->probeName);
+
+	//now nuke the aa struct itself
+	free(aarray);
+
 }
 
 /**
@@ -277,3 +294,12 @@ void aaPrintSummary(FILE *fp, AssociativeArray *aarray)
 	fprintf(fp, "  Deletion  : %d\n", aarray->deleteCost);
 }
 
+//Custom functions created by Lukas
+static int deleteKey(AAKeyType key, size_t keylen, void *value, void *userdata)
+{
+	if (key != NULL)
+	{
+		free(key);
+	}
+	return 0;
+}
