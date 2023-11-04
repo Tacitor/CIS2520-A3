@@ -125,7 +125,7 @@ HashIndex linearProbe(AssociativeArray *hashTable,
 	)
 {
 	/**
-	 * TO DO: you will need to implement an algorithm
+	 * DONE: you will need to implement an algorithm
 	 * that probes until it finds an "empty" slot in
 	 * the hashTable.  Note that because of tombstones,
 	 * there are multiple ways of a slot being empty.
@@ -187,6 +187,9 @@ HashIndex linearProbe(AssociativeArray *hashTable,
 		} else if (invalidEndsSearch && keyDataPairValidity == HASH_DELETED) {
 			//if we are insterting then we can also stop at the first tombstone and overwite it
 			contSearch = 0; //stop the search
+
+			//ensure that the key in this tombstone is freed since is it about to be overwitten by a new insetion
+			deleteKey((hashTable->table)[j].key);
 
 			return j;
 		}

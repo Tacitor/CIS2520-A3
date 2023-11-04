@@ -79,7 +79,7 @@ void
 aaDeleteAssociativeArray(AssociativeArray *aarray)
 {
 	/**
-	 * TO DO:  clean up the memory managed by our utility
+	 * DONE:  clean up the memory managed by our utility
 	 *
 	 * Note that memory for keys are managed, values are the
 	 * responsibility of the user
@@ -165,7 +165,7 @@ static HashProbe lookupNamedProbingStrategy(const char *name)
 int aaInsert(AssociativeArray *aarray, AAKeyType key, size_t keylen, void *value)
 {
 	/**
-	 * TO DO:  Search for a location where this key can go, stopping
+	 * DONE:  Search for a location where this key can go, stopping
 	 * if we find a value that has been delete and reuse it.
 	 *
 	 * If a suitable location is found, we then initialize that
@@ -183,11 +183,12 @@ int aaInsert(AssociativeArray *aarray, AAKeyType key, size_t keylen, void *value
 
 	//check for a used index
 	if (aarray->table[finalIndex].validity == HASH_USED) {
-		//this should never be called because the prob should always work, but this is good to have just in case.
+		//this should never be called because the probe should always work, but this is good to have just in case.
 		fprintf(stderr, "Error: Failed to probe correctly with: '%s' when inserting", aarray->probeName);
 	} else if (finalIndex >= 0) {
 
 		//add it into the array
+		//TO DO: Check to see if this strdup call causes issues with null terminator when in useIntKey mode
 		aarray->table[finalIndex].key = (AAKeyType)strdup((char*)key); //Do not forget to free this later
 		aarray->table[finalIndex].keylen = keylen;
 		aarray->table[finalIndex].value = value;
@@ -214,7 +215,7 @@ void *aaLookup(AssociativeArray *aarray, AAKeyType key, size_t keylen
 	)
 {
 	/**
-	 * TO DO: perform a similar search to the insert, but here a
+	 * DONE: perform a similar search to the insert, but here a
 	 * deleted location means we have not found the key
 	 */
 
@@ -271,7 +272,7 @@ void *aaLookup(AssociativeArray *aarray, AAKeyType key, size_t keylen
 void *aaDelete(AssociativeArray *aarray, AAKeyType key, size_t keylen)
 {
 	/**
-	 * TO DO: Deletion is closely related to lookup;
+	 * DONE: Deletion is closely related to lookup;
 	 * you must find where the key is stored before
 	 * you delete it, after all.
 	 *
@@ -367,7 +368,7 @@ void aaPrintSummary(FILE *fp, AssociativeArray *aarray)
 }
 
 //Custom functions created by Lukas
-static int deleteKey(AAKeyType key)
+int deleteKey(AAKeyType key)
 {
 	if (key != NULL)
 	{
