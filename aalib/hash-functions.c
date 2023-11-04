@@ -149,19 +149,38 @@ HashIndex linearProbe(AssociativeArray *hashTable,
 	int contSearch = 1;
 	int keyDataPairValidity;
 
+	//Debug the lookup process
+	/* 
+	if (!invalidEndsSearch) {
+		printf("\nSearching for key: %s starting at: %d\n", (char*)key, index);	
+	}
+	*/
+
 	//loop until a spot has been found
 	while (contSearch) {
 		keyDataPairValidity = (hashTable->table)[j].validity;
 		//count this itteration towards the total cost
 		(*cost)++;
+		
+		//Debug the lookup process
+		/* 
+		if (!invalidEndsSearch) {
+			printf("Mem address: %p\n", (hashTable->table)[j].key);
+		}
+		*/
 
-		//test to see if this index has the provided key in it
-		if ((hashTable->table)[j].key == key) {
+		// test to see if this index has the provided key in it
+		if ((hashTable->table)[j].key != NULL && memcmp((hashTable->table)[j].key, key, keylength) == 0)
+		{
 			contSearch = 0;
 
-			//we found it return this index
-			
-			return j;
+			// we found it return this index
+			if (keyDataPairValidity == HASH_USED)
+			{
+				return j;
+			} else { //if this is a tombstom do not return it 
+				return -1;
+			}
 		}
 
 		//if this is not the key we are looking for, or we are inserting and it won't be in here
