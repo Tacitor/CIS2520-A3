@@ -232,13 +232,17 @@ void *aaLookup(AssociativeArray *aarray, AAKeyType key, size_t keylen
 	printf("finalIndex: %ld, validity: %d\n", finalIndex, aarray->table[finalIndex].validity);
 	*/
 
+	//debug the status of an entry especially after deletion
+	//printf("\tLookup for: %s, has finalIndex of: %ld, with validity of: %d\n", (char*)key, finalIndex, aarray->table[finalIndex].validity);
+
 	// see if the finalIndex is in the table
 	// check to see if the returned index is used
 	if (finalIndex >= 0 && aarray->table[finalIndex].validity == HASH_USED)
 	{
 		// if the index is in use make sure it is the correct one
 		// return NULL if the wrong index is returned
-		if ((aarray->table)[finalIndex].key != NULL && memcmp((aarray->table)[finalIndex].key, key, keylen) == 0)
+		if ((aarray->table)[finalIndex].key != NULL 
+			&& doKeysMatch((aarray->table)[finalIndex].key, (aarray->table)[finalIndex].keylen, key, keylen) == 1)
 		{
 			return aarray->table[finalIndex].value;
 		}
@@ -275,6 +279,42 @@ void *aaDelete(AssociativeArray *aarray, AAKeyType key, size_t keylen)
 	 * as described in class
 	 */
 
+	// will need to use the hash algorithm from aarray, use the primary
+	// this gives us the first possible index. Will begin the deletion search here
+	// will need to run through a probing strategy before storing the value
+	HashIndex hasedIndex = (*(aarray->hashAlgorithmPrimary))(key, keylen, aarray->size); // the index in the hash table. Indexing starts at 0
+
+	// then look at the index in the location found above
+	// call the probe method to get the next index
+	HashIndex finalIndex = (*(aarray->hashProbe))(aarray, key, keylen, hasedIndex, 0, &aarray->deleteCost);
+
+	// see if the finalIndex is in the table
+	// check to see if the returned index is used
+	if (finalIndex >= 0 && aarray->table[finalIndex].validity == HASH_USED)
+	{
+		// if the index is in use make sure it is the correct one
+		// return NULL if the wrong index is returned
+		if ((aarray->table)[finalIndex].key != NULL 
+			&& doKeysMatch((aarray->table)[finalIndex].key, (aarray->table)[finalIndex].keylen, key, keylen) == 1)
+		{
+			//now need to delete the entry by marking it as a tombstone
+			(aarray->table)[finalIndex].validity = HASH_DELETED;
+			//keep the key as is so it can be displayed at the print out of the hash table
+
+			//count the newly deleted entry
+			aarray->nEntries--;
+
+			return (aarray->table)[finalIndex].value;
+		}
+		else
+		{
+			// this is probably never called
+			fprintf(stderr, "Error: Failed to probe correctly with: '%s' when deleting", aarray->probeName);
+			return NULL;
+		}
+	}
+
+	//return NULL in all other conditions
 	return NULL;
 }
 

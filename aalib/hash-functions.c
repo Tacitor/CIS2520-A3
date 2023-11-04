@@ -170,17 +170,12 @@ HashIndex linearProbe(AssociativeArray *hashTable,
 		*/
 
 		// test to see if this index has the provided key in it
-		if ((hashTable->table)[j].key != NULL && memcmp((hashTable->table)[j].key, key, keylength) == 0)
+		if ((hashTable->table)[j].key != NULL 
+			&& (hashTable->table)[j].validity == HASH_USED 
+			&& doKeysMatch((hashTable->table)[j].key, (hashTable->table)[j].keylen, key, keylength) == 1)
 		{
 			contSearch = 0;
-
-			// we found it return this index
-			if (keyDataPairValidity == HASH_USED)
-			{
-				return j;
-			} else { //if this is a tombstom do not return it 
-				return -1;
-			}
+			return j;
 		}
 
 		//if this is not the key we are looking for, or we are inserting and it won't be in here
