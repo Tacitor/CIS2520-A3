@@ -99,6 +99,9 @@ HashIndex hashBySum(AAKeyType key, size_t keyLength, HashIndex size)
 	 * of a "working" (but not very smart) hashing
 	 * algorithm.
 	 */
+	for (int i = 0; i < keyLength; i++) {
+		sum = (sum + (HashIndex)(key[i])) % size;
+	}
 
 	return sum;
 }
