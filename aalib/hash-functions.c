@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h> // for strcmp()
 #include <ctype.h> // for isprint()
 
@@ -189,7 +190,10 @@ HashIndex linearProbe(AssociativeArray *hashTable,
 			contSearch = 0; //stop the search
 
 			//ensure that the key in this tombstone is freed since is it about to be overwitten by a new insetion
-			deleteKey((hashTable->table)[j].key);
+			if (key != NULL)
+			{
+				free((hashTable->table)[j].key);
+			}
 
 			return j;
 		}
