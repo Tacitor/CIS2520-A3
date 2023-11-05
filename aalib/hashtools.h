@@ -47,6 +47,9 @@ HashIndex hashBySum(AAKeyType key, size_t keyLength, HashIndex tableSize);
 HashIndex linearProbe(AssociativeArray *table, AAKeyType key, size_t keyLength, int index, int stopOnInvalid, int *cost);
 HashIndex  quadraticProbe(AssociativeArray *table, AAKeyType key, size_t keyLength, int index, int stopOnInvalid, int *cost);
 HashIndex  doubleHashProbe(AssociativeArray *table, AAKeyType key, size_t keyLength, int index, int stopOnInvalid, int *cost);
+/** prototypes added by Lukas*/
+HashIndex hashByPrime(AAKeyType key, size_t keyLength, HashIndex tableSize);
+/** END OF prototypes added by Lukas*/
 
 int getLargerPrime(int value);
 

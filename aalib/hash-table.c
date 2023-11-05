@@ -131,9 +131,11 @@ static HashAlgorithm lookupNamedHashStrategy(const char *name)
 	if (strncmp(name, "sum", 3) == 0) {
 		return hashBySum;
 	} else if (strncmp(name, "len", 3) == 0) {
-		return hashByLength;
-
-		// TO DO: add in your own strategy here
+		return hashByLength;		
+	}
+	else if (strncmp(name, "pri", 3) == 0)
+	{ // DONE: add in your own strategy here
+		return hashByPrime;
 	}
 
 	fprintf(stderr, "Invalid hash strategy '%s' - using 'sum'\n", name);

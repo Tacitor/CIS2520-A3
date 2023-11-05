@@ -74,8 +74,6 @@ HashIndex hashByLength(AAKeyType key, size_t keyLength, HashIndex size)
 	return keyLength % size;
 }
 
-
-
 /**
  * Calculate a hash value based on the sum of the values in the key
  *
@@ -83,9 +81,9 @@ HashIndex hashByLength(AAKeyType key, size_t keyLength, HashIndex size)
  * 		the given string key, based on the sum of the values
  *		in the key
  *
- *  param  key  key to calculate mapping upon
- *  param  size boundary for range of allowable return values
- *  return      integer index associated with key
+ *  @param  key  key to calculate mapping upon
+ *  @param  size boundary for range of allowable return values
+ *  @return      integer index associated with key
  */
 HashIndex hashBySum(AAKeyType key, size_t keyLength, HashIndex size)
 {
@@ -104,6 +102,29 @@ HashIndex hashBySum(AAKeyType key, size_t keyLength, HashIndex size)
 	}
 
 	return sum;
+}
+
+/**
+ * Calculate a hash value based on the sum of prime numbers based on values in the key
+ *
+ * Calculate an integer index in the range [0...size-1] for
+ * 		the given string key, based on the sum of prime
+ *		numbers. These primes are selected by the values in
+ *		the key.
+ *
+ *  @param  key  key to calculate mapping upon
+ *  @param  size boundary for range of allowable return values
+ *  @return      integer index associated with key
+ */
+HashIndex hashByPrime(AAKeyType key, size_t keyLength, HashIndex size)
+{
+	HashIndex primeSum = 0;
+
+	for (int i = 0; i < keyLength; i++) {
+		primeSum = (primeSum + getLargerPrime((unsigned int)(key[i]))) % size;
+	}
+
+	return primeSum;
 }
 
 
