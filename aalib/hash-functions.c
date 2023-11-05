@@ -92,7 +92,7 @@ HashIndex hashBySum(AAKeyType key, size_t keyLength, HashIndex size)
 	HashIndex sum = 0;
 
 	/**
-	 * TO DO: you will need to implement a summation based
+	 * DONE: you will need to implement a summation based
 	 * hashing algorithm here, using a sum-of-bytes
 	 * strategy such as that discussed in class.  Take
 	 * a look at HashByLength if you want an example
@@ -240,7 +240,7 @@ HashIndex quadraticProbe(AssociativeArray *hashTable, AAKeyType key, size_t keyl
 	)
 {
 	/**
-	 * TO DO: you will need to implement an algorithm
+	 * DONE: you will need to implement an algorithm
 	 * that probes until it finds an "empty" slot in
 	 * the hashTable.  Note that because of tombstones,
 	 * there are multiple ways of a slot being empty.
@@ -259,6 +259,75 @@ HashIndex quadraticProbe(AssociativeArray *hashTable, AAKeyType key, size_t keyl
 	 * strategy, such as that discussed in class.
 	 */
 
+	int step = 0;
+	HashIndex j = startIndex;
+
+	//set up the stopping condition
+	int contSearch = 1;
+	int keyDataPairValidity;
+
+	//Debug the lookup process
+	/* 
+	if (!invalidEndsSearch) {
+		printf("\nSearching for key: %s starting at: %d\n", (char*)key, index);	
+	}
+	*/
+
+	//loop until a spot has been found
+	while (contSearch) {
+		keyDataPairValidity = (hashTable->table)[j].validity;
+		//count this itteration towards the total cost
+		(*cost)++;
+		
+		//Debug the lookup process
+		/* 
+		if (!invalidEndsSearch) {
+			printf("Mem address: %p\n", (hashTable->table)[j].key);
+		}
+		*/
+
+		// test to see if this index has the provided key in it
+		if ((hashTable->table)[j].key != NULL 
+			&& (hashTable->table)[j].validity == HASH_USED 
+			&& doKeysMatch((hashTable->table)[j].key, (hashTable->table)[j].keylen, key, keylen) == 1)
+		{
+			contSearch = 0;
+			return j;
+		}
+
+		//if this is not the key we are looking for, or we are inserting and it won't be in here
+		//test to see if need to continue searching or if we have hit a dead end that does not inlcude finding the desired key
+		if (keyDataPairValidity == HASH_EMPTY) { //the second we find an empty spot we know that the given key is not here AND that it <i>could</i> be added here is insterting
+			contSearch = 0; //stop the search
+
+			return j;
+		} else if (invalidEndsSearch && keyDataPairValidity == HASH_DELETED) {
+			//if we are insterting then we can also stop at the first tombstone and overwite it
+			contSearch = 0; //stop the search
+
+			//ensure that the key in this tombstone is freed since is it about to be overwitten by a new insetion
+			if (key != NULL)
+			{
+				free((hashTable->table)[j].key);
+			}
+
+			return j;
+		}
+
+		//if we have not reached an empty spot quaddratically probe the next spot
+		step++;
+		j = (startIndex + (step * step)) % hashTable->size;
+		
+		if (step == hashTable->size) { //if a single step is larger than the table there is no room left
+			//the hash table is full :(
+			contSearch = 0;
+			
+			return -1;
+		}
+	}
+
+	//if the loop is broken out of without returning the function some error has occoured
+	fprintf(stderr, "Invalid call to quadraticProbe returning -1\n");
 	return -1;
 }
 
