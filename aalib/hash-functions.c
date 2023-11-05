@@ -354,7 +354,7 @@ HashIndex doubleHashProbe(AssociativeArray *hashTable, AAKeyType key, size_t key
 	)
 {
 	/**
-	 * TO DO: you will need to implement an algorithm
+	 * DONE: you will need to implement an algorithm
 	 * that calls a second hash function (listed
 	 * in the hashTable) and uses the value obtained
 	 * as a result from that as the step size.
@@ -363,6 +363,58 @@ HashIndex doubleHashProbe(AssociativeArray *hashTable, AAKeyType key, size_t key
 	 * the above strategies.
 	 */
 
+	HashIndex step = (*(hashTable->hashAlgorithmSecondary))(key, keylen, hashTable->size); //get the step size
+	HashIndex j = startIndex;
+
+	//set up the stopping condition
+	int contSearch = 1;
+	int keyDataPairValidity;
+
+	//loop until a spot has been found
+	while (contSearch) {
+		keyDataPairValidity = (hashTable->table)[j].validity;
+		//count this itteration towards the total cost
+		(*cost)++;
+
+		// test to see if this index has the provided key in it
+		if ((hashTable->table)[j].key != NULL 
+			&& (hashTable->table)[j].validity == HASH_USED 
+			&& doKeysMatch((hashTable->table)[j].key, (hashTable->table)[j].keylen, key, keylen) == 1)
+		{
+			contSearch = 0;
+			return j;
+		}
+
+		//if this is not the key we are looking for, or we are inserting and it won't be in here
+		//test to see if need to continue searching or if we have hit a dead end that does not inlcude finding the desired key
+		if (keyDataPairValidity == HASH_EMPTY) { //the second we find an empty spot we know that the given key is not here AND that it <i>could</i> be added here is insterting
+			contSearch = 0; //stop the search
+
+			return j;
+		} else if (invalidEndsSearch && keyDataPairValidity == HASH_DELETED) {
+			//if we are insterting then we can also stop at the first tombstone and overwite it
+			contSearch = 0; //stop the search
+
+			//ensure that the key in this tombstone is freed since is it about to be overwitten by a new insetion
+			if (key != NULL)
+			{
+				free((hashTable->table)[j].key);
+			}
+
+			return j;
+		}
+
+		//if we have not reached an empty spot linearly probe the next spot (use step size of calculated by the secondary hash)
+		j = (j + step) % hashTable->size;
+
+		if (j == startIndex) { //if we have wrapped around again to the starting position
+			//the hash table is full :(
+			
+			return -1;
+		}
+	}
+
+	//if the loop is broken out of without returning the function some error has occoured
+	fprintf(stderr, "Invalid call for doubleHashProbe returning -1\n");
 	return -1;
 }
-
