@@ -10,6 +10,9 @@
 static HashAlgorithm lookupNamedHashStrategy(const char *name);
 static HashProbe lookupNamedProbingStrategy(const char *name);
 
+/** Custom forward declaration for function created by Lukas*/
+static int deleteKeys(AssociativeArray *);
+
 /**
  * Create a hash table of the given size,
  * which will use the given algorithm to create hash values,
@@ -43,7 +46,7 @@ aaCreateAssociativeArray(
 	newTable->hashAlgorithmPrimary = lookupNamedHashStrategy(hashPrimary);
 	newTable->hashNamePrimary = strdup(hashPrimary);
 	newTable->hashAlgorithmSecondary = lookupNamedHashStrategy(hashSecondary);
-	newTable->hashNameSecondary = strdup(hashPrimary);
+	newTable->hashNameSecondary = strdup(hashSecondary);
 	newTable->hashProbe = lookupNamedProbingStrategy(probingStrategy);
 	newTable->probeName = strdup(probingStrategy);
 
@@ -76,11 +79,25 @@ void
 aaDeleteAssociativeArray(AssociativeArray *aarray)
 {
 	/**
-	 * TO DO:  clean up the memory managed by our utility
+	 * DONE:  clean up the memory managed by our utility
 	 *
 	 * Note that memory for keys are managed, values are the
 	 * responsibility of the user
 	 */
+	//dealloc all the keys
+	deleteKeys(aarray);
+
+	//dealloc the array
+	free(aarray->table);
+
+	//dealloc the strings
+	free(aarray->hashNamePrimary);
+	free(aarray->hashNameSecondary);
+	free(aarray->probeName);
+
+	//now nuke the aa struct itself
+	free(aarray);
+
 }
 
 /**
@@ -114,9 +131,11 @@ static HashAlgorithm lookupNamedHashStrategy(const char *name)
 	if (strncmp(name, "sum", 3) == 0) {
 		return hashBySum;
 	} else if (strncmp(name, "len", 3) == 0) {
-		return hashByLength;
-
-		// TO DO: add in your own strategy here
+		return hashByLength;		
+	}
+	else if (strncmp(name, "pri", 3) == 0)
+	{ // DONE: add in your own strategy here
+		return hashByPrime;
 	}
 
 	fprintf(stderr, "Invalid hash strategy '%s' - using 'sum'\n", name);
@@ -148,15 +167,40 @@ static HashProbe lookupNamedProbingStrategy(const char *name)
 int aaInsert(AssociativeArray *aarray, AAKeyType key, size_t keylen, void *value)
 {
 	/**
-	 * TO DO:  Search for a location where this key can go, stopping
+	 * DONE:  Search for a location where this key can go, stopping
 	 * if we find a value that has been delete and reuse it.
 	 *
 	 * If a suitable location is found, we then initialize that
 	 * slot with the new key and data
 	 */
 
+	//will need to use the hash algorithm from aarray, use the primary
+	//this gives us the first possible index. Might not store the value here as a collision is possible.
+	//will need to run through a probing strategy before storing the value
+	HashIndex hasedIndex = (*(aarray->hashAlgorithmPrimary))(key, keylen, aarray->size); //the index in the hash table. Indexing starts at 0
 
-	return -1;
+	//then look at the index in the location found above
+	//call the probe method to get the index
+	HashIndex finalIndex = (*(aarray->hashProbe))(aarray, key, keylen, hasedIndex, 1, &aarray->insertCost);
+
+	//check for a used index
+	if (aarray->table[finalIndex].validity == HASH_USED) {
+		//this should never be called because the probe should always work, but this is good to have just in case.
+		fprintf(stderr, "Error: Failed to probe correctly with: '%s' when inserting", aarray->probeName);
+	} else if (finalIndex >= 0) {
+
+		//add it into the array
+		//TO DO: Check to see if this strdup call causes issues with null terminator when in useIntKey mode
+		aarray->table[finalIndex].key = (AAKeyType)strdup((char*)key); //Do not forget to free this later
+		aarray->table[finalIndex].keylen = keylen;
+		aarray->table[finalIndex].value = value;
+		aarray->table[finalIndex].validity = HASH_USED;
+
+		//count the newly added entry
+		aarray->nEntries++;
+	}
+
+	return finalIndex; //can always return the finalIndex b/c all the probing algos return -1 if they fail, so we can just pass it forward always
 }
 
 
@@ -173,13 +217,49 @@ void *aaLookup(AssociativeArray *aarray, AAKeyType key, size_t keylen
 	)
 {
 	/**
-	 * TO DO: perform a similar search to the insert, but here a
+	 * DONE: perform a similar search to the insert, but here a
 	 * deleted location means we have not found the key
 	 */
 
+	// will need to use the hash algorithm from aarray, use the primary
+	// this gives us the first possible index. Will begin the search here
+	// will need to run through a probing strategy before storing the value
+	HashIndex hasedIndex = (*(aarray->hashAlgorithmPrimary))(key, keylen, aarray->size); // the index in the hash table. Indexing starts at 0
+
+	// then look at the index in the location found above
+	// call the probe method to get the next index
+	HashIndex finalIndex = (*(aarray->hashProbe))(aarray, key, keylen, hasedIndex, 0, &aarray->searchCost);
+
+	//Debug the lookup process
+	/* 
+	printf("finalIndex: %ld, validity: %d\n", finalIndex, aarray->table[finalIndex].validity);
+	*/
+
+	//debug the status of an entry especially after deletion
+	//printf("\tLookup for: %s, has finalIndex of: %ld, with validity of: %d\n", (char*)key, finalIndex, aarray->table[finalIndex].validity);
+
+	// see if the finalIndex is in the table
+	// check to see if the returned index is used
+	if (finalIndex >= 0 && aarray->table[finalIndex].validity == HASH_USED)
+	{
+		// if the index is in use make sure it is the correct one
+		// return NULL if the wrong index is returned
+		if ((aarray->table)[finalIndex].key != NULL 
+			&& doKeysMatch((aarray->table)[finalIndex].key, (aarray->table)[finalIndex].keylen, key, keylen) == 1)
+		{
+			return aarray->table[finalIndex].value;
+		}
+		else
+		{
+			// this is probably never called
+			fprintf(stderr, "Error: Failed to probe correctly with: '%s' when querying", aarray->probeName);
+			return NULL;
+		}
+	}
+
+	//return NULL in all other conditions
 	return NULL;
 }
-
 
 /**
  * Locates the KeyDataPair associated with the given key, if
@@ -194,7 +274,7 @@ void *aaLookup(AssociativeArray *aarray, AAKeyType key, size_t keylen
 void *aaDelete(AssociativeArray *aarray, AAKeyType key, size_t keylen)
 {
 	/**
-	 * TO DO: Deletion is closely related to lookup;
+	 * DONE: Deletion is closely related to lookup;
 	 * you must find where the key is stored before
 	 * you delete it, after all.
 	 *
@@ -202,6 +282,42 @@ void *aaDelete(AssociativeArray *aarray, AAKeyType key, size_t keylen)
 	 * as described in class
 	 */
 
+	// will need to use the hash algorithm from aarray, use the primary
+	// this gives us the first possible index. Will begin the deletion search here
+	// will need to run through a probing strategy before storing the value
+	HashIndex hasedIndex = (*(aarray->hashAlgorithmPrimary))(key, keylen, aarray->size); // the index in the hash table. Indexing starts at 0
+
+	// then look at the index in the location found above
+	// call the probe method to get the next index
+	HashIndex finalIndex = (*(aarray->hashProbe))(aarray, key, keylen, hasedIndex, 0, &aarray->deleteCost);
+
+	// see if the finalIndex is in the table
+	// check to see if the returned index is used
+	if (finalIndex >= 0 && aarray->table[finalIndex].validity == HASH_USED)
+	{
+		// if the index is in use make sure it is the correct one
+		// return NULL if the wrong index is returned
+		if ((aarray->table)[finalIndex].key != NULL 
+			&& doKeysMatch((aarray->table)[finalIndex].key, (aarray->table)[finalIndex].keylen, key, keylen) == 1)
+		{
+			//now need to delete the entry by marking it as a tombstone
+			(aarray->table)[finalIndex].validity = HASH_DELETED;
+			//keep the key as is so it can be displayed at the print out of the hash table
+
+			//count the newly deleted entry
+			aarray->nEntries--;
+
+			return (aarray->table)[finalIndex].value;
+		}
+		else
+		{
+			// this is probably never called
+			fprintf(stderr, "Error: Failed to probe correctly with: '%s' when deleting", aarray->probeName);
+			return NULL;
+		}
+	}
+
+	//return NULL in all other conditions
 	return NULL;
 }
 
@@ -253,3 +369,30 @@ void aaPrintSummary(FILE *fp, AssociativeArray *aarray)
 	fprintf(fp, "  Deletion  : %d\n", aarray->deleteCost);
 }
 
+//Custom functions created by Lukas
+int deleteKey(AAKeyType key)
+{
+	if (key != NULL)
+	{
+		free(key);
+	}
+	return 0;
+}
+
+/**
+ * iterate over the array, deleting and deallocing keys as it goes
+ */
+static int deleteKeys(AssociativeArray *aarray)
+{
+	int i;
+
+	for (i = 0; i < aarray->size; i++)
+	{
+		//this allows both used and tombstone keys to be dealloc'd
+		if (aarray->table[i].validity != HASH_EMPTY)
+		{
+			deleteKey(aarray->table[i].key);			
+		}
+	}
+	return 1;
+}

@@ -182,7 +182,7 @@ void usage(char *progname)
 	fprintf(stderr, "%-*s: Print out the table after processing.\n", OPTIONLEN, "-p");
 	fprintf(stderr, "%-*s: Hash using the given algorithm.  Choices are \"sum\", \"length\",\n",
 			OPTIONLEN, "-H <ALG>");
-	fprintf(stderr, "%-*s: or your own algorithm.\n", OPTIONLEN, "");
+	fprintf(stderr, "%-*s: or \"prime\".\n", OPTIONLEN, "");
 	fprintf(stderr, "%-*s: Probe using the given algorithm.  Choices are \"linear\", \"quadratic\",\n",
 			OPTIONLEN, "-P <ALG>");
 	fprintf(stderr, "%-*s: or \"doublehash\".\n", OPTIONLEN, "");
