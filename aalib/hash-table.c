@@ -185,8 +185,12 @@ int aaInsert(AssociativeArray *aarray, AAKeyType key, size_t keylen, void *value
 
 	//check for a used index
 	if (aarray->table[finalIndex].validity == HASH_USED) {
-		//this should never be called because the probe should always work, but this is good to have just in case.
-		fprintf(stderr, "Error: Failed to probe correctly with: '%s' when inserting", aarray->probeName);
+		//this is called when the probe returns an index that would work but is already used
+		//such a a case occurs when inserting duplicate keys
+		fprintf(stderr, "Error: Failed to probe correctly with: '%s' when inserting\n", aarray->probeName);
+		
+		//set the finalIndex to be an error state
+		finalIndex = -1;
 	} else if (finalIndex >= 0) {
 
 		//add it into the array
