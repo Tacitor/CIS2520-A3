@@ -43,7 +43,13 @@ printableKey(char *buffer, int bufferlen, AAKeyType key, size_t printlen)
 	}
 
 	if (allChars) {
-		snprintf(buffer, bufferlen, "char key:[%s]", (char *) key);
+		snprintf(buffer, bufferlen, "char key:[");
+		loadptr = &buffer[strlen(buffer)];
+		for (i = 0; i < printlen && loadptr - buffer < bufferlen - 2; i++) {
+			*loadptr++ = key[i];
+		}
+		*loadptr++ = ']';
+		*loadptr++ = 0;
 	} else {
 		snprintf(buffer, bufferlen, "hex key:[0x");
 		loadptr = &buffer[strlen(buffer)];
